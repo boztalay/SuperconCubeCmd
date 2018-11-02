@@ -42,7 +42,7 @@ class Cube(object):
         return response[:-2].strip()
 
     def writeBlock(self, destination, block):
-        self.port.write("m u " + destination + "\r") 
+        self.port.write("m u " + destination + "\r")
         for i, element in enumerate(block):
             self.port.write(chr(element))
             if i == 2:
@@ -125,6 +125,58 @@ class CubeCommand(cmd.Cmd):
         # Print out the cipher
         cipher = self.cube.sendCommand("m c u")
         print cipher
+
+    def do_broadcastMessage(self, args):
+        """
+        Broadcasts a message encrypted with the cipher in flash page 0
+        """
+
+        block = []
+        for character in args:
+            block.append(ord(character))
+
+        while len(block) < 512:
+            block.append(0)
+
+        # Load the message into buffer B
+        self.cube.writeBlock("b", block)
+
+        # Load the cipher into buffer C
+        self.cube.sendCommand("r %d" % CIPHER_FLASH_PAGE)
+        self.cube.sendCommand("m f b")
+
+        # Encrypt the message
+        self.cube.sendCommand("x b c")
+
+        # Broadcast the message
+        self.cube.sendCommand("x b n")
+
+    def do_broadcastMessage(self, args):
+        """
+        Received a message and decrypts it with the cipher in flash page 0
+        """
+
+        # Receive the message, put it in buffer B
+        self.cube.sendCommand("x n b")
+
+        # Load the cipher into buffer C
+        self.cube.sendCommand("r %d" % CIPHER_FLASH_PAGE)
+        self.cube.sendCommand("m f b")
+
+        # Decrypt the message
+        self.cube.sendCommand("x c b")
+
+        # Print the message
+        messageBytes = self.cube.sendCommand("x b u")
+        message = ""
+
+        for element in messageBytes:
+            if element == 0:
+                break
+
+            message.append(chr(element))
+
+        print message
 
     def do_readFlash(self, args):
         """
