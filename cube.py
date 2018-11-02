@@ -151,9 +151,9 @@ class CubeCommand(cmd.Cmd):
         # Broadcast the message
         self.cube.sendCommand("x b n")
 
-    def do_broadcastMessage(self, args):
+    def do_receiveMessage(self, args):
         """
-        Received a message and decrypts it with the cipher in flash page 0
+        Receives a message and decrypts it with the cipher in flash page 0
         """
 
         # Receive the message, put it in buffer B
@@ -167,14 +167,14 @@ class CubeCommand(cmd.Cmd):
         self.cube.sendCommand("x c b")
 
         # Print the message
-        messageBytes = self.cube.sendCommand("x b u")
+        rawMessage = self.cube.sendCommand("x b u")
+        messageBytes = map(int, rawMessage.split())
         message = ""
 
         for element in messageBytes:
             if element == 0:
                 break
-
-            message.append(chr(element))
+            message += chr(element)
 
         print message
 
