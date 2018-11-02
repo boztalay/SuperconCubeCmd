@@ -41,6 +41,15 @@ class Cube(object):
         self.port.flush()
         return response[:-2].strip()
 
+    def writeBlock(self, destination, block):
+        self.port.write("m u " + destination + "\r") 
+        for i, element in enumerate(block):
+            self.port.write(chr(element))
+            if i == 2:
+                self.port.write(chr(element))
+
+        return self.readResponse()
+
 class CubeCommand(cmd.Cmd):
 
     def __init__(self, cube):
@@ -88,13 +97,34 @@ class CubeCommand(cmd.Cmd):
         cipher = self.cube.sendCommand("m c u")
         print cipher
 
-    # def do_loadCipher(self, args):
-        # """
-        # Read in the given cipher, place it in buffer C, save it to flash, and
-        # then print it out
-        # """
+    def do_loadCipher(self, args):
+        """
+        Read in the given cipher, place it in buffer C, save it to flash, and
+        then print it out
 
-        # self.cube.send
+        The cipher should be given as 512 whitespace-delimited decimal numbers
+        """
+
+        rawCipher = self.splitArgs(args, 512)
+        if args is None:
+            return
+
+        try:
+            cipher = map(int, rawCipher)
+        except ValueError as e:
+            print "Cipher must be decimal numbers: " + str(e)
+            return
+
+        # Write the cipher to buffer C
+        self.cube.writeBlock("c", cipher)
+
+        # Write it to flash to save it
+        self.cube.sendCommand("w %d" % CIPHER_FLASH_PAGE)
+        self.cube.sendCommand("m c f")
+
+        # Print out the cipher
+        cipher = self.cube.sendCommand("m c u")
+        print cipher
 
     def do_readFlash(self, args):
         """
@@ -153,18 +183,6 @@ class CubeCommand(cmd.Cmd):
         self.cube.sendCommand("r %d" % (pageIndex * 2))
         rawContents = self.cube.sendCommand("m f u")
         return map(int, rawContents.split())
-
-    def writeFlashPage(self, pageIndex, contents):
-        if len(contents) > PAGE_SIZE:
-            print "Page too large to write to flash!"
-
-        while len(contents) < PAGE_SIZE:
-            contents.append(0)
-
-        self.cube.sendCommand("w %d" % pageIndex)
-        self.cube.sendCommand("m u f")
-        self.cube.write(" ".join(map(lambda x: "%03d" % x, contents)))
-        self.cube.sendCommand("q")
 
     def printPage(self, contents):
         rowFormat = "% 4X |" + (" %02X" * 16)
