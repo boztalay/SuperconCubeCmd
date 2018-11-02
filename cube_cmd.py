@@ -1,54 +1,20 @@
 import cmd
-import serial
 import sys
+
+import cubey
 
 MAX_PAGE_INDEX = 32767
 
 CIPHER_FLASH_PAGE = 0
 
 def main(serialPort):
-    cube = Cube(serialPort)
+    cube = cubey.Cube(serialPort)
     cubeCommand = CubeCommand(cube)
 
     try:
         cubeCommand.cmdloop()
     except KeyboardInterrupt:
         print
-
-class Cube(object):
-    def __init__(self, serialPort):
-        self.port = serial.Serial(serialPort, 115200)
-
-    def sendCommand(self, command):
-        self.port.write(command + "\r")
-        return self.readResponse()
-
-    def readResponse(self):
-        response = ""
-
-        while not response.endswith("\n+"):
-            character = self.port.read(1)
-            if len(character) == 0:
-                print "Whoops, couldn't read a response"
-                sys.exit(1)
-
-            response += character
-
-            if response.endswith("error"):
-                self.port.flush()
-                return None
-
-        self.port.flush()
-        return response[:-2].strip()
-
-    def writeBlock(self, destination, block):
-        self.port.write("m u " + destination + "\r")
-        for i, element in enumerate(block):
-            self.port.write(chr(element))
-            if i == 2:
-                self.port.write(chr(element))
-
-        return self.readResponse()
 
 class CubeCommand(cmd.Cmd):
 
@@ -238,6 +204,8 @@ class CubeCommand(cmd.Cmd):
 
     def printPage(self, contents):
         rowFormat = "% 4X |" + (" %02X" * 16)
+        print "        0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F"
+        print "      ------------------------------------------------"
         for rowStartIndex in range(0, 512, 16):
             print rowFormat % tuple([rowStartIndex] + contents[rowStartIndex:rowStartIndex + 16])
 
