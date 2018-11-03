@@ -35,3 +35,5 @@ class Cube(object):
 
         return self.readResponse()
 
+    def breakOut(self):
+        self.port.write("q\r")
