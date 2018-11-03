@@ -52,15 +52,13 @@ class CubeCommand(cmd.Cmd):
         and print it out
         """
 
-        # Generate a true random block and put it in buffer C
-        self.cube.sendCommand("m t c")
-
-        # Write it to flash to save it
+        # Generate a true random block and put it in flash
         self.cube.sendCommand("w %d" % CIPHER_FLASH_PAGE)
-        self.cube.sendCommand("m c f")
+        self.cube.sendCommand("m t f")
 
         # Print out the cipher
-        cipher = self.cube.sendCommand("m c u")
+        self.cube.sendCommand("r %d" % CIPHER_FLASH_PAGE)
+        cipher = self.cube.sendCommand("m f u")
         print cipher
 
     def do_loadCipher(self, args):
@@ -81,15 +79,13 @@ class CubeCommand(cmd.Cmd):
             print "Cipher must be decimal numbers: " + str(e)
             return
 
-        # Write the cipher to buffer C
-        self.cube.writeBlock("c", cipher)
-
-        # Write it to flash to save it
+        # Write the cipher to flash to save it
         self.cube.sendCommand("w %d" % CIPHER_FLASH_PAGE)
-        self.cube.sendCommand("m c f")
+        self.cube.writeBlock("f", cipher)
 
         # Print out the cipher
-        cipher = self.cube.sendCommand("m c u")
+        self.cube.sendCommand("r %d" % CIPHER_FLASH_PAGE)
+        cipher = self.cube.sendCommand("m f u")
         print cipher
 
     def do_broadcastMessage(self, args):
@@ -107,14 +103,8 @@ class CubeCommand(cmd.Cmd):
         # Load the message into buffer B
         self.cube.writeBlock("b", block)
 
-        # Load the cipher into buffer C
+        # Encrypt the message with the cipher in flash and broadcast it
         self.cube.sendCommand("r %d" % CIPHER_FLASH_PAGE)
-        self.cube.sendCommand("m f b")
-
-        # Encrypt the message
-        self.cube.sendCommand("x b c")
-
-        # Broadcast the message
         self.cube.sendCommand("x b n")
 
     def do_receiveMessage(self, args):
@@ -125,15 +115,11 @@ class CubeCommand(cmd.Cmd):
         # Receive the message, put it in buffer B
         self.cube.sendCommand("x n b")
 
-        # Load the cipher into buffer C
+        # Decrypt the message with the cipher in flash
         self.cube.sendCommand("r %d" % CIPHER_FLASH_PAGE)
-        self.cube.sendCommand("m f b")
-
-        # Decrypt the message
-        self.cube.sendCommand("x c b")
+        rawMessage = self.cube.sendCommand("x b u")
 
         # Print the message
-        rawMessage = self.cube.sendCommand("x b u")
         messageBytes = map(int, rawMessage.split())
         message = ""
 
