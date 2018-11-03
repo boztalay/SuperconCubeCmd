@@ -6,19 +6,23 @@ import cubey
 def main(serialPort):
     cube = cubey.Cube(serialPort)
 
-    minNumberLength = 0
-    maxNumberLength = 100
+    commandNumber = 0
 
     try:
         while True:
             letters = pickRandomLetters()
             numbers = pickRandomNumbers()
 
-            command = "r " + letters
+            command = "w " + letters
             if len(numbers) != 0:
                 command += " " + numbers
 
             result = cube.sendCommand(command)
+            commandNumber += 1
+
+            if commandNumber % 100 == 0:
+                print "Command %d is: %s" % (commandNumber, command)
+
             if result is None:
                 print "Invalid command found: " + command
     except KeyboardInterrupt:
@@ -43,7 +47,7 @@ def pickRandomLetters():
 def pickRandomNumbers():
     validNumbers = "0123456789"
     minNumbersLength = 0
-    maxNumbersLength = 100
+    maxNumbersLength = 10
 
     numbersLength = random.randint(minNumbersLength, maxNumbersLength)
 
