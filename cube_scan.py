@@ -10,8 +10,10 @@ def main(serialPort):
 
     try:
         while True:
-            letters = pickRandomLetters()
-            numbers = pickRandomNumbers()
+            # letters = pickRandomLetters()
+            # numbers = pickRandomNumbers()
+            letters = pickSetOfBadLetters()
+            numbers = pickSetOfBadNumbers()
 
             command = "w " + letters
             if len(numbers) != 0:
@@ -23,12 +25,31 @@ def main(serialPort):
             if commandNumber % 100 == 0:
                 print "Command %d is: %s" % (commandNumber, command)
 
-            if result is None:
-                print "Invalid command found: " + command
+            # if result is None:
+                # print "Invalid command found: " + command
+
+            if result is not None:
+                print "Valid command found: " + command
     except KeyboardInterrupt:
         print
 
     print "Done!"
+
+def pickSetOfBadLetters():
+    badLetterSets = [
+        "qP",
+        "mf",
+        "b",
+        "au",
+        "Hc",
+        "WN",
+        "JR",
+        "Gz",
+        "tz"
+    ]
+
+    letterSetIndex = random.randint(0, len(badLetterSets) - 1)
+    return badLetterSets[letterSetIndex]
 
 def pickRandomLetters():
     validLetters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -43,6 +64,22 @@ def pickRandomLetters():
         letters += validLetters[letterIndex]
 
     return letters
+
+def pickSetOfBadNumbers():
+    badNumberSets = [
+        "511246339",
+        "65537442",
+        "720899288",
+        "7864395327",
+        "0786439478",
+        "3014659",
+        "395968513",
+        "1441796181",
+        "83230771"
+    ]
+
+    numberSetIndex = random.randint(0, len(badNumberSets) - 1)
+    return badNumberSets[numberSetIndex]
 
 def pickRandomNumbers():
     validNumbers = "0123456789"
